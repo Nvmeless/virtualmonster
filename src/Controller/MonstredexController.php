@@ -14,6 +14,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\EventDispatcher\Event;
 
 class MonstredexController extends AbstractController
@@ -32,8 +33,7 @@ class MonstredexController extends AbstractController
     {
         $monstredexs = $repository->findAll();// Datas 
  
-        $jsonMonstredex = $serializer->serialize($monstredexs,'json');
-
+        $jsonMonstredex = $serializer->serialize($monstredexs,'json',["groups" => "getAllMonstredex"]);
         return new JsonResponse($jsonMonstredex, Response::HTTP_OK,[],true);
     }
         
@@ -42,7 +42,7 @@ class MonstredexController extends AbstractController
     {
         $monstredexs = $repository->find($id);// Datas 
  
-        $jsonMonstredex = $serializer->serialize($monstredexs,'json');
+        $jsonMonstredex = $serializer->serialize($monstredexs,'json',["groups" => "getAllMonstredex"]);
 
         return new JsonResponse($jsonMonstredex, Response::HTTP_OK,[],true);
     }
@@ -58,7 +58,7 @@ class MonstredexController extends AbstractController
         $entityManager->persist($monstredexEntry);
         $entityManager->flush();
         
-        $jsonMonstredex = $serializer->serialize($monstredexEntry,'json');
+        $jsonMonstredex = $serializer->serialize($monstredexEntry,'json',["groups" => "getAllMonstredex"]);
         $location = $urlGenerator->generate("monstredex.get",["id" => $monstredexEntry->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($jsonMonstredex, Response::HTTP_CREATED,["Location"=> $location],true);
     }
@@ -75,14 +75,17 @@ class MonstredexController extends AbstractController
     }
 
     #[Route('/api/monstredex/{id}', name: 'monstredex.update', methods: ['PATCH', "PUT"])]
-    public function updateMonstredex(int $id,Request $request, MonstredexRepository $repository,SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
+    public function updateMonstredex(int $id,ValidatorInterface $validator,Request $request, MonstredexRepository $repository,SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
     {
         $monstredex = $repository->find($id);// Datas 
         $updatedMonstredex = $serializer->deserialize($request->getContent(), Monstredex::class, 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $monstredex]);
         $updatedMonstredex->setUpdatedAt(new DateTimeImmutable());
+        $errors = $validator->validate($updatedMonstredex);
+        if($errors->count() > 0){
+            return new JsonResponse($serializer->serialize($errors, "json"), JsonResponse::HTTP_BAD_REQUEST ,[], true);
+        }
         $entityManager->persist($monstredex);
         $entityManager->flush();
-
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT,[]);
     }
