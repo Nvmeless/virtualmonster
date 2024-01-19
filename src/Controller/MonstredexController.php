@@ -21,7 +21,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Contracts\EventDispatcher\Event;
-
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Attributes as OA;
 class MonstredexController extends AbstractController
 {
     #[Route('/monstredex', name: 'app_monstredex')]
@@ -52,8 +54,32 @@ class MonstredexController extends AbstractController
         } );
         return new JsonResponse($jsonMonstredex, Response::HTTP_OK,[],true);
     }
-        
+        /**
+         * Cette methode recupere des monstredex
+         */
         #[Route('/api/monstredex/{id}', name: 'monstredex.get', methods: ['GET'])]
+        #[OA\Response(
+        response: 200,
+        description: 'Returns the rewards of an user',
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Monstredex::class, groups: ['getAllMonstredex']))
+        )
+    )]
+    //     #[OA\Parameter(
+    //     name: 'id',
+    //     in: 'path',
+    //     description: "l'id monstredex",
+    //     schema: new OA\Schema(type: 'int')
+    // )]
+        //     #[OA\Parameter(
+    //     name: 'id',
+    //     in: 'query',
+    //     description: "l'id monstredex",
+    //     schema: new OA\Schema(type: 'int')
+    // )]
+    #[OA\Tag(name: 'monstredex')]
+    #[Security(name: 'Bearer')]
     public function getMonstredex(int $id, MonstredexRepository $repository, SerializerInterface $serializer): JsonResponse
     {
         $monstredexs = $repository->find($id);// Datas 
