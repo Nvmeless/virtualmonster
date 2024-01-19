@@ -10,3 +10,6 @@ api_login_check:
 kernel:
     resource: ../src/Kernel.php
     type: attribute
+
+api_refresh_token:
+    path: /api/token/refresh
